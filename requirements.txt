@@ -1,5 +1,35 @@
-flask
+
+# --- Core Server ---
+fastapi
+uvicorn[standard]
+
+# --- Supabase + PostgREST support ---
+supabase-py
+
+# --- Firebase support ---
+firebase-admin
+
+# --- OpenAI / AI Tasks ---
+openai
+
+# --- Image handling & OCR prep ---
+pillow
+python-multipart  # for file uploads
+aiofiles          # async file handling
+
+# --- Web requests & auth ---
+httpx
 requests
-python-dotenv
-supabase
-pyjwt
+python-dotenv     # for loading .env variables
+pyjwt             # if you use JWTs for secure API auth
+
+# --- Data & JSON tools ---
+pydantic
+orjson
+
+# --- Optional: Task queue, if scaling later ---
+celery
+redis
+
+# --- Optional: CORS & middlewares ---
+fastapi[all]
