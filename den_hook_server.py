@@ -86,12 +86,38 @@ async def kitenga_fetch(request: Request):
         return JSONResponse(content={"status": "Error", "message": str(e)}, status_code=500)
 
 
-# ─── RONGOHIA (OCR) ─────────────────────────────────
+# ─── RONGOHIA (OPENAI OCR) ───────────────────────────
 @app.post("/rongohia/ocr")
 async def rongohia_ocr(request: Request):
     data = await request.json()
-    print("[RONGOHIA OCR]", data)
-    return {"status": "OCR triggered", "input": data}
+    image_url = data.get("image_url", "")
+    if not image_url:
+        return JSONResponse(content={"error": "Missing image_url"}, status_code=400)
+
+    openai.api_key = OPENAI_API_KEY
+    try:
+        response = openai.chat.completions.create(
+            model="gpt-4-vision-preview",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": "Extract all visible text from this image clearly."},
+                        {"type": "image_url", "image_url": {"url": image_url}},
+                    ],
+                }
+            ],
+            max_tokens=500,
+        )
+        result = response.choices[0].message.content
+        return JSONResponse(content={"status": "success", "text": result})
+    except Exception as e:
+        return JSONResponse(content={"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.get("/")
+async def root():
+    return {"message": "Rongohia is alive and watching."}
 
 # ─── TAWERA (SAVE TO SUPABASE) ─────────────────────
 @app.post("/tawera/save")
