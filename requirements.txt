@@ -3,29 +3,19 @@ fastapi
 uvicorn
 
 # --- Supabase ---
-supabase-py
+supabase  # ← this is the correct package!
 
-# --- OpenAI / AI Tasks ---
+# --- AI / OCR / Image / Tools ---
 openai
-
-# --- Firebase (optional) ---
 firebase-admin
-
-# --- OCR / Images ---
 pillow
 python-multipart
 aiofiles
-
-# --- Web Requests & Auth ---
 httpx
 requests
 python-dotenv
 pyjwt
-
-# --- JSON / Data Tools ---
 pydantic
 orjson
-
-# --- Optional: Background Tasks / Queue ---
 celery
 redis
