@@ -2,8 +2,7 @@ services:
   - type: web
     name: kitenga-server
     env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: python den_hook_server.py
-    envVars:
-      - key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmeXhzbHZkcmN3Y2RzZmxkeXZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUwNDQwMzksImV4cCI6MjA2MDYyMDAzOX0.3F6cFHFvFpyc1V0CnfRH-U6OBGKwagj0-N5UZ8jBFMo
-        sync: false
+    plan: free
+    buildCommand: ""
+    startCommand: "uvicorn den_hook_server:app --host 0.0.0.0 --port 10000"
+    envVars: []
