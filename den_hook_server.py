@@ -26,43 +26,65 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ─── KITENGA ────────────────────────────────────────
+# ─── KITENGA MODULES ─────────────────────────────────────────────
+
 @app.post("/kitenga/log")
 async def kitenga_log(request: Request):
     data = await request.json()
     print("[KITENGA LOG]", data)
     return JSONResponse(content={"status": "kitenga_log_received", "data": data})
 
+
 @app.post("/kitenga/speak")
 async def kitenga_speak(request: Request):
     data = await request.json()
     print("[KITENGA SPEAK]", data)
-    return {"reply": f"Kitenga says: '{data.get('message', '')}'"}
+    return JSONResponse(content={"reply": f"Kitenga says: '{data.get('message', '')}'"})
 
-@app.get("/kitenga/fetch")
-async def fetch_from_supabase(table: str = "projects"):
-    headers = {
-        "apikey": SUPABASE_KEY,
-        "Authorization": f"Bearer {SUPABASE_KEY}"
-    }
-    url = f"{SUPABASE_URL}/rest/v1/{table}?select=*"
-    r = requests.get(url, headers=headers)
-    return r.json()
 
 @app.post("/kitenga/remember")
-async def remember_in_supabase(request: Request):
+async def kitenga_remember(request: Request):
     data = await request.json()
-    table = data.get("table", "projects")
-    payload = data.get("entry")
+    table = data.get("table", "")
+    entry = data.get("entry", {})
 
-    headers = {
-        "apikey": SUPABASE_KEY,
-        "Authorization": f"Bearer {SUPABASE_KEY}",
-        "Content-Type": "application/json"
-    }
-    url = f"{SUPABASE_URL}/rest/v1/{table}"
-    r = requests.post(url, headers=headers, json=payload)
-    return r.json()
+    try:
+        response = requests.post(
+            f"{SUPABASE_URL}/rest/v1/{table}",
+            headers={
+                "Authorization": f"Bearer {SUPABASE_KEY}",
+                "Content-Type": "application/json",
+                "apikey": SUPABASE_KEY,
+                "Prefer": "return=representation"
+            },
+            json=entry
+        )
+        if response.status_code in [200, 201]:
+            return JSONResponse(content={"status": "Memory stored."})
+        else:
+            return JSONResponse(content={"status": "Failed to store memory."}, status_code=response.status_code)
+    except Exception as e:
+        return JSONResponse(content={"status": "Error", "message": str(e)}, status_code=500)
+
+
+@app.get("/kitenga/fetch")
+async def kitenga_fetch(request: Request):
+    table = request.query_params.get("table", "projects")
+    try:
+        response = requests.get(
+            f"{SUPABASE_URL}/rest/v1/{table}",
+            headers={
+                "Authorization": f"Bearer {SUPABASE_KEY}",
+                "apikey": SUPABASE_KEY
+            }
+        )
+        if response.status_code == 200:
+            return JSONResponse(content=response.json())
+        else:
+            return JSONResponse(content={"status": "Failed to fetch data."}, status_code=response.status_code)
+    except Exception as e:
+        return JSONResponse(content={"status": "Error", "message": str(e)}, status_code=500)
+
 
 # ─── RONGOHIA (OCR) ─────────────────────────────────
 @app.post("/rongohia/ocr")
