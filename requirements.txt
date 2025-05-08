@@ -1,35 +1,31 @@
-
 # --- Core Server ---
 fastapi
-uvicorn[standard]
+uvicorn
 
-# --- Supabase + PostgREST support ---
+# --- Supabase ---
 supabase-py
-
-# --- Firebase support ---
-firebase-admin
 
 # --- OpenAI / AI Tasks ---
 openai
 
-# --- Image handling & OCR prep ---
-pillow
-python-multipart  # for file uploads
-aiofiles          # async file handling
+# --- Firebase (optional) ---
+firebase-admin
 
-# --- Web requests & auth ---
+# --- OCR / Images ---
+pillow
+python-multipart
+aiofiles
+
+# --- Web Requests & Auth ---
 httpx
 requests
-python-dotenv     # for loading .env variables
-pyjwt             # if you use JWTs for secure API auth
+python-dotenv
+pyjwt
 
-# --- Data & JSON tools ---
+# --- JSON / Data Tools ---
 pydantic
 orjson
 
-# --- Optional: Task queue, if scaling later ---
+# --- Optional: Background Tasks / Queue ---
 celery
 redis
-
-# --- Optional: CORS & middlewares ---
-fastapi[all]
