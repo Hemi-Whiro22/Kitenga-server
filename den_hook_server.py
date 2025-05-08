@@ -5,8 +5,10 @@ import uvicorn
 app = FastAPI()
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import requests  # <-- Make sure this is included!
+
 
 # 🔐 SUPABASE CONFIG
 SUPABASE_URL = "https://pfyxslvdrcwcdsfldyvl.supabase.co"
@@ -15,7 +17,7 @@ SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 @app.get("/")
 async def root():
     return {"message": "Kitenga Den Hook Server is alive."}
-from fastapi.middleware.cors import CORSMiddleware
+
 
 app = FastAPI()
 
