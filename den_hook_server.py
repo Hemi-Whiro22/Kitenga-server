@@ -7,6 +7,18 @@ app = FastAPI()
 @app.get("/")
 async def root():
     return {"message": "Kitenga Den Hook Server is alive."}
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
+
+# Allow requests from localhost and anywhere else if needed
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # or ["http://localhost:5500"] for stricter rules
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ─── KITENGA ────────────────────────────────────────
 @app.post("/kitenga/log")
