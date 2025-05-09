@@ -1,30 +1,32 @@
+
 from fastapi import FastAPI, Request
-app = FastAPI()
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-import requests  # <-- Make sure this is included!
-
-
-# 🔐 SUPABASE CONFIG
-SUPABASE_URL = "https://pfyxslvdrcwcdsfldyvl.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmeXhzbHZkcmN3Y2RzZmxkeXZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUwNDQwMzksImV4cCI6MjA2MDYyMDAzOX0.3F6cFHFvFpyc1V0CnfRH-U6OBGKwagj0-N5UZ8jBFMo"  # paste full key here
-
-@app.get("/")
-async def root():
-    return {"message": "Kitenga Den Hook Server is alive."}
-
+import requests
+import openai
+import os
 
 app = FastAPI()
 
-# Allow requests from localhost and anywhere else if needed
+# Setup keys and config
+SUPABASE_URL = "https://pfyxslvdrcwcdsfldyvl.supabase.co"
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+openai.api_key = OPENAI_API_KEY
+
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # or ["http://localhost:5500"] for stricter rules
+    allow_origins=["*", "null"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/")
+async def root():
+    return {"message": "Kitenga + Rongohia are alive and synced."}
 
 # ─── KITENGA MODULES ─────────────────────────────────────────────
 
@@ -34,13 +36,11 @@ async def kitenga_log(request: Request):
     print("[KITENGA LOG]", data)
     return JSONResponse(content={"status": "kitenga_log_received", "data": data})
 
-
 @app.post("/kitenga/speak")
 async def kitenga_speak(request: Request):
     data = await request.json()
     print("[KITENGA SPEAK]", data)
     return JSONResponse(content={"reply": f"Kitenga says: '{data.get('message', '')}'"})
-
 
 @app.post("/kitenga/remember")
 async def kitenga_remember(request: Request):
@@ -62,9 +62,12 @@ async def kitenga_remember(request: Request):
         if response.status_code in [200, 201]:
             return JSONResponse(content={"status": "Memory stored."})
         else:
-      return JSONResponse(content={"status": "Failed to store memory.", "detail": response.text}, status_code=response.status_code)
-
-
+            return JSONResponse(
+                content={"status": "Failed to store memory.", "detail": response.text},
+                status_code=response.status_code
+            )
+    except Exception as e:
+        return JSONResponse(content={"status": "Error", "message": str(e)}, status_code=500)
 
 @app.get("/kitenga/fetch")
 async def kitenga_fetch(request: Request):
@@ -82,8 +85,7 @@ async def kitenga_fetch(request: Request):
         else:
             return JSONResponse(content={"status": "Failed to fetch data."}, status_code=response.status_code)
     except Exception as e:
-            return JSONResponse(content={"status": "Error", "message": str(e)}, status_code=500)
-
+        return JSONResponse(content={"status": "Error", "message": str(e)}, status_code=500)
 
 # ─── RONGOHIA (OPENAI OCR) ───────────────────────────
 @app.post("/rongohia/ocr")
@@ -93,7 +95,6 @@ async def rongohia_ocr(request: Request):
     if not image_url:
         return JSONResponse(content={"error": "Missing image_url"}, status_code=400)
 
-    openai.api_key = OPENAI_API_KEY
     try:
         response = openai.chat.completions.create(
             model="gpt-4-vision-preview",
@@ -112,11 +113,6 @@ async def rongohia_ocr(request: Request):
         return JSONResponse(content={"status": "success", "text": result})
     except Exception as e:
         return JSONResponse(content={"status": "error", "message": str(e)}, status_code=500)
-
-
-@app.get("/")
-async def root():
-    return {"message": "Rongohia is alive and watching."}
 
 # ─── TAWERA (SAVE TO SUPABASE) ─────────────────────
 @app.post("/tawera/save")
