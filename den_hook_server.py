@@ -62,9 +62,8 @@ async def kitenga_remember(request: Request):
         if response.status_code in [200, 201]:
             return JSONResponse(content={"status": "Memory stored."})
         else:
-            return JSONResponse(content={"status": "Failed to store memory."}, status_code=response.status_code)
-    except Exception as e:
-        return JSONResponse(content={"status": "Error", "message": str(e)}, status_code=500)
+      return JSONResponse(content={"status": "Failed to store memory.", "detail": response.text}, status_code=response.status_code)
+
 
 
 @app.get("/kitenga/fetch")
