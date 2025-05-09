@@ -12,8 +12,7 @@ app = FastAPI()
 SUPABASE_URL = "https://pfyxslvdrcwcdsfldyvl.supabase.co"
 SUPABASE_KEY = os.getenv("Anonkey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmeXhzbHZkcmN3Y2RzZmxkeXZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUwNDQwMzksImV4cCI6MjA2MDYyMDAzOX0.3F6cFHFvFpyc1V0CnfRH-U6OBGKwagj0-N5UZ8jBFMo")
 OPENAI_API_KEY = os.getenv("Service: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmeXhzbHZkcmN3Y2RzZmxkeXZsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NTA0NDAzOSwiZXhwIjoyMDYwNjIwMDM5fQ.1upG1iVNVJXbl4E67mI7iaOqyAgKi9VmacAon6pgFGUY")
-openai.api_key = OPENAI_API_KEY
-
+"
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*", "null"],
