@@ -9,13 +9,11 @@ import os
 
 app = FastAPI()
 
-# Setup keys and config
 SUPABASE_URL = "https://pfyxslvdrcwcdsfldyvl.supabase.co"
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 openai.api_key = OPENAI_API_KEY
 
-# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*", "null"],
@@ -27,8 +25,6 @@ app.add_middleware(
 @app.get("/")
 async def root():
     return {"message": "Kitenga + Rongohia are alive and synced."}
-
-# ─── KITENGA MODULES ─────────────────────────────────────────────
 
 @app.post("/kitenga/log")
 async def kitenga_log(request: Request):
@@ -83,11 +79,13 @@ async def kitenga_fetch(request: Request):
         if response.status_code == 200:
             return JSONResponse(content=response.json())
         else:
-            return JSONResponse(content={"status": "Failed to fetch data."}, status_code=response.status_code)
+            return JSONResponse(
+                content={"status": "Failed to fetch data.", "detail": response.text},
+                status_code=response.status_code
+            )
     except Exception as e:
         return JSONResponse(content={"status": "Error", "message": str(e)}, status_code=500)
 
-# ─── RONGOHIA (OPENAI OCR) ───────────────────────────
 @app.post("/rongohia/ocr")
 async def rongohia_ocr(request: Request):
     data = await request.json()
@@ -114,14 +112,12 @@ async def rongohia_ocr(request: Request):
     except Exception as e:
         return JSONResponse(content={"status": "error", "message": str(e)}, status_code=500)
 
-# ─── TAWERA (SAVE TO SUPABASE) ─────────────────────
 @app.post("/tawera/save")
 async def tawera_save(request: Request):
     data = await request.json()
     print("[TAWERA SAVE]", data)
     return {"status": "Saved to Supabase (mock)", "input": data}
 
-# ─── WAIRUA (KŌRERO ROUTING) ───────────────────────
 @app.post("/wairua/route")
 async def wairua_route(request: Request):
     data = await request.json()
