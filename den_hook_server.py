@@ -82,7 +82,7 @@ async def kitenga_fetch(request: Request):
         else:
             return JSONResponse(content={"status": "Failed to fetch data."}, status_code=response.status_code)
     except Exception as e:
-        return JSONResponse(content={"status": "Error", "message": str(e)}, status_code=500)
+            return JSONResponse(content={"status": "Error", "message": str(e)}, status_code=500)
 
 
 # ─── RONGOHIA (OPENAI OCR) ───────────────────────────
