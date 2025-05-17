@@ -6,13 +6,14 @@ import requests
 import openai
 import os
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 app = FastAPI()
 
-SUPABASE_URL = "https://pfyxslvdrcwcdsfldyvl.supabase.co"
-SUPABASE_KEY = os.getenv("Anonkey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmeXhzbHZkcmN3Y2RzZmxkeXZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUwNDQwMzksImV4cCI6MjA2MDYyMDAzOX0.3F6cFHFvFpyc1V0CnfRH-U6OBGKwagj0-N5UZ8jBFMo")
-OPENAI_API_KEY = os.getenv("Service: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmeXhzbHZkcmN3Y2RzZmxkeXZsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NTA0NDAzOSwiZXhwIjoyMDYwNjIwMDM5fQ.1upG1iVNVJXbl4E67mI7iaOqyAgKi9VmacAon6pgFGUY")
-
+# Middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*", "null"],
@@ -21,6 +22,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Load config from .env
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_SECRET_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+openai.api_key = OPENAI_API_KEY
+
+# Optional Tables
+DEFAULT_TABLE = os.getenv("SUPABASE_TABLE", "korero")
+
+# Stream cache
 latest_awa_stream = {}
 
 @app.get("/")
@@ -42,7 +53,7 @@ async def kitenga_speak(request: Request):
 @app.post("/kitenga/remember")
 async def kitenga_remember(request: Request):
     data = await request.json()
-    table = data.get("table", "")
+    table = data.get("table", DEFAULT_TABLE)
     entry = data.get("entry", {})
 
     try:
@@ -68,7 +79,7 @@ async def kitenga_remember(request: Request):
 
 @app.get("/kitenga/fetch")
 async def kitenga_fetch(request: Request):
-    table = request.query_params.get("table", "projects")
+    table = request.query_params.get("table", DEFAULT_TABLE)
     try:
         response = requests.get(
             f"{SUPABASE_URL}/rest/v1/{table}",
@@ -96,7 +107,7 @@ async def rongohia_ocr(request: Request):
 
     try:
         response = openai.chat.completions.create(
-            model="gpt-4-vision-preview",
+            model=os.getenv("OPENAI_MODEL", "gpt-4-vision-preview"),
             messages=[
                 {
                     "role": "user",
@@ -113,18 +124,6 @@ async def rongohia_ocr(request: Request):
     except Exception as e:
         return JSONResponse(content={"status": "error", "message": str(e)}, status_code=500)
 
-@app.post("/tawera/save")
-async def tawera_save(request: Request):
-    data = await request.json()
-    print("[TAWERA SAVE]", data)
-    return {"status": "Saved to Supabase (mock)", "input": data}
-
-@app.post("/wairua/route")
-async def wairua_route(request: Request):
-    data = await request.json()
-    print("[WAIRUA ROUTE]", data)
-    return {"status": "Routed kōrero", "input": data}
-
 @app.post("/awa/stream")
 async def awa_stream(request: Request):
     global latest_awa_stream
@@ -136,10 +135,9 @@ async def awa_stream(request: Request):
     }
     print("[AWA STREAM]", latest_awa_stream)
 
-    # Optional: push to Supabase 'korero' table
     try:
-        supa_push = requests.post(
-            f"{SUPABASE_URL}/rest/v1/korero",
+        response = requests.post(
+            f"{SUPABASE_URL}/rest/v1/{DEFAULT_TABLE}",
             headers={
                 "Authorization": f"Bearer {SUPABASE_KEY}",
                 "Content-Type": "application/json",
@@ -158,4 +156,4 @@ async def awa_latest():
     return JSONResponse(content=latest_awa_stream)
 
 if __name__ == "__main__":
-    uvicorn.run("den_hook_server:app", host="0.0.0.0", port=10000, reload=True)
+    uvicorn.run("kitenga_server:app", host="0.0.0.0", port=int(os.getenv("PORT", 10000)), reload=True)
