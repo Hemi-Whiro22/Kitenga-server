@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,12 +5,14 @@ import uvicorn
 import requests
 import openai
 import os
+from datetime import datetime
 
 app = FastAPI()
 
 SUPABASE_URL = "https://pfyxslvdrcwcdsfldyvl.supabase.co"
 SUPABASE_KEY = os.getenv("Anonkey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmeXhzbHZkcmN3Y2RzZmxkeXZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUwNDQwMzksImV4cCI6MjA2MDYyMDAzOX0.3F6cFHFvFpyc1V0CnfRH-U6OBGKwagj0-N5UZ8jBFMo")
 OPENAI_API_KEY = os.getenv("Service: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmeXhzbHZkcmN3Y2RzZmxkeXZsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NTA0NDAzOSwiZXhwIjoyMDYwNjIwMDM5fQ.1upG1iVNVJXbl4E67mI7iaOqyAgKi9VmacAon6pgFGUY")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*", "null"],
@@ -19,6 +20,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+latest_awa_stream = {}
 
 @app.get("/")
 async def root():
@@ -121,6 +124,38 @@ async def wairua_route(request: Request):
     data = await request.json()
     print("[WAIRUA ROUTE]", data)
     return {"status": "Routed kōrero", "input": data}
+
+@app.post("/awa/stream")
+async def awa_stream(request: Request):
+    global latest_awa_stream
+    data = await request.json()
+    latest_awa_stream = {
+        "message": data.get("message", ""),
+        "from": data.get("from", "unknown"),
+        "timestamp": datetime.utcnow().isoformat()
+    }
+    print("[AWA STREAM]", latest_awa_stream)
+
+    # Optional: push to Supabase 'korero' table
+    try:
+        supa_push = requests.post(
+            f"{SUPABASE_URL}/rest/v1/korero",
+            headers={
+                "Authorization": f"Bearer {SUPABASE_KEY}",
+                "Content-Type": "application/json",
+                "apikey": SUPABASE_KEY,
+                "Prefer": "return=representation"
+            },
+            json=latest_awa_stream
+        )
+    except Exception as e:
+        print("[SUPABASE ERROR]", e)
+
+    return JSONResponse(content={"status": "flow_received", "echo": latest_awa_stream})
+
+@app.get("/awa/latest")
+async def awa_latest():
+    return JSONResponse(content=latest_awa_stream)
 
 if __name__ == "__main__":
     uvicorn.run("den_hook_server:app", host="0.0.0.0", port=10000, reload=True)
