@@ -79,7 +79,7 @@ async def kitenga_remember(request: Request):
             json=entry
         )
         if response.status_code in [200, 201]:
-            db.collection("supabase_sync").add(entry)  # 🔥 Live sync to Firestore
+            db.collection("supabase_sync").add(entry)
             return JSONResponse(content={"status": "Memory stored and mirrored."})
         else:
             return JSONResponse(
@@ -132,6 +132,7 @@ async def rongohia_ocr(request: Request):
             max_tokens=500,
         )
         result = response.choices[0].message.content
+        db.collection("ocr_results").add({"image_url": image_url, "text": result})
         return JSONResponse(content={"status": "success", "text": result})
     except Exception as e:
         return JSONResponse(content={"status": "error", "message": str(e)}, status_code=500)
@@ -158,7 +159,7 @@ async def awa_stream(request: Request):
             },
             json=latest_awa_stream
         )
-        db.collection("awa_stream").add(latest_awa_stream)  # 🔥 Sync stream to Firestore
+        db.collection("awa_stream").add(latest_awa_stream)
     except Exception as e:
         print("[SUPABASE ERROR]", e)
 
@@ -176,6 +177,15 @@ async def glyph_mirror(request: Request):
         doc_ref = db.collection("glyph_mirror").document()
         doc_ref.set(data)
         return JSONResponse(content={"status": "mirrored", "id": doc_ref.id})
+    except Exception as e:
+        return JSONResponse(content={"status": "error", "message": str(e)}, status_code=500)
+
+@app.get("/glyph/query")
+async def query_glyphs():
+    try:
+        docs = db.collection("glyph_mirror").stream()
+        data = [doc.to_dict() for doc in docs]
+        return JSONResponse(content={"glyphs": data})
     except Exception as e:
         return JSONResponse(content={"status": "error", "message": str(e)}, status_code=500)
 
