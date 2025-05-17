@@ -8,8 +8,19 @@ import os
 from datetime import datetime
 from dotenv import load_dotenv
 
+# Firebase Admin SDK
+import firebase_admin
+from firebase_admin import credentials, firestore
+
 # Load environment variables
 load_dotenv()
+
+# Initialize Firebase
+FIREBASE_CRED_PATH = os.getenv("FIREBASE_CRED_PATH", "firebase_service_account.json")
+if not firebase_admin._apps:
+    cred = credentials.Certificate(FIREBASE_CRED_PATH)
+    firebase_admin.initialize_app(cred)
+db = firestore.client()
 
 app = FastAPI()
 
@@ -68,7 +79,8 @@ async def kitenga_remember(request: Request):
             json=entry
         )
         if response.status_code in [200, 201]:
-            return JSONResponse(content={"status": "Memory stored."})
+            db.collection("supabase_sync").add(entry)  # 🔥 Live sync to Firestore
+            return JSONResponse(content={"status": "Memory stored and mirrored."})
         else:
             return JSONResponse(
                 content={"status": "Failed to store memory.", "detail": response.text},
@@ -146,6 +158,7 @@ async def awa_stream(request: Request):
             },
             json=latest_awa_stream
         )
+        db.collection("awa_stream").add(latest_awa_stream)  # 🔥 Sync stream to Firestore
     except Exception as e:
         print("[SUPABASE ERROR]", e)
 
@@ -155,5 +168,16 @@ async def awa_stream(request: Request):
 async def awa_latest():
     return JSONResponse(content=latest_awa_stream)
 
+@app.post("/glyph/mirror")
+async def glyph_mirror(request: Request):
+    data = await request.json()
+    print("[GLYPH MIRROR]", data)
+    try:
+        doc_ref = db.collection("glyph_mirror").document()
+        doc_ref.set(data)
+        return JSONResponse(content={"status": "mirrored", "id": doc_ref.id})
+    except Exception as e:
+        return JSONResponse(content={"status": "error", "message": str(e)}, status_code=500)
+
 if __name__ == "__main__":
-    uvicorn.run("kitenga_server:app", host="0.0.0.0", port=int(os.getenv("PORT", 10000)), reload=True)
+    uvicorn.run("den_hook_server:app", host="0.0.0.0", port=int(os.getenv("PORT", 10000)), reload=True)
