@@ -7,6 +7,7 @@ import openai
 import os
 from datetime import datetime
 from dotenv import load_dotenv
+import json
 
 # Firebase Admin SDK
 import firebase_admin
@@ -15,11 +16,12 @@ from firebase_admin import credentials, firestore
 # Load environment variables
 load_dotenv()
 
-# Initialize Firebase
-FIREBASE_CRED_PATH = os.getenv("FIREBASE_CRED_PATH", "firebase_service_account.json")
-if not firebase_admin._apps:
-    cred = credentials.Certificate(FIREBASE_CRED_PATH)
+# Initialize Firebase using JSON from environment
+firebase_key_json = os.getenv("FIREBASE_KEY_JSON")
+if firebase_key_json and not firebase_admin._apps:
+    cred = credentials.Certificate(json.loads(firebase_key_json))
     firebase_admin.initialize_app(cred)
+
 db = firestore.client()
 
 app = FastAPI()
