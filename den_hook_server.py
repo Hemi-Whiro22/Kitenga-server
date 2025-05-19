@@ -16,13 +16,17 @@ from firebase_admin import credentials, firestore
 # Load environment variables
 load_dotenv()
 
-# Initialize Firebase using JSON from environment
 firebase_key_json = os.getenv("FIREBASE_KEY_JSON")
-if firebase_key_json and not firebase_admin._apps:
-    cred = credentials.Certificate(json.loads(firebase_key_json))
-    firebase_admin.initialize_app(cred)
+db = None  # Default to None
 
-db = firestore.client()
+if firebase_key_json and not firebase_admin._apps:
+    try:
+        cred = credentials.Certificate(json.loads(firebase_key_json))
+        firebase_admin.initialize_app(cred)
+        db = firestore.client()
+    except Exception as e:
+        print("[FIREBASE INIT ERROR]", e)
+
 
 app = FastAPI()
 
