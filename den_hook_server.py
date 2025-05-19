@@ -61,11 +61,23 @@ async def kitenga_log(request: Request):
     print("[KITENGA LOG]", data)
     return JSONResponse(content={"status": "kitenga_log_received", "data": data})
 
-@app.post("/kitenga/speak")
-async def kitenga_speak(request: Request):
+@app.post("/kitenga/chat")
+async def kitenga_chat(request: Request):
     data = await request.json()
-    print("[KITENGA SPEAK]", data)
-    return JSONResponse(content={"reply": f"Kitenga says: '{data.get('message', '')}'"})
+    message = data.get("message", "")
+    if not message:
+        return JSONResponse(content={"error": "No message sent"}, status_code=400)
+
+    try:
+        response = openai.ChatCompletion.create(
+            model=os.getenv("OPENAI_MODEL", "gpt-4o"),
+            messages=[{"role": "user", "content": message}],
+            max_tokens=400
+        )
+        return JSONResponse(content={"reply": response.choices[0].message.content})
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
 
 @app.post("/kitenga/remember")
 async def kitenga_remember(request: Request):
